@@ -1,5 +1,12 @@
 /* jshint white: true, lastsemic: true */
 
+// Store global data in this object
+var MetaCPAN = {};
+// Store our actual favs
+MetaCPAN.fav_data = {};
+// Collect favs we need to check after dom ready
+MetaCPAN.favs_to_check = {};
+
 document.cookie = "hideTOC=; expires=" + (new Date(0)).toGMTString() + "; path=/";
 
 $.fn.textWidth = function() {
@@ -74,6 +81,8 @@ $(document).ready(function() {
     processUserData();
 
     $(".ttip").tooltip();
+
+    processUserData();
 
     $('#signin-button').mouseenter(function() {
         $('#signin').show()
@@ -401,13 +410,27 @@ function logInPAUSE(a) {
 }
 
 function processUserData() {
-    // TODO: use localstorage for cacheing
     getFavDataFromServer();
 }
 
 function showUserData(fav_data) {
     // User is logged in, so show it
     $('.logged_in').css('display', 'inline');
+
+    // process favs
+    $.each(fav_data.faves, function(index, value) {
+        var distribution = value.distribution;
+
+        // create a lookup
+        MetaCPAN.fav_data[distribution] = 1;
+
+        // On the page... make it deltable
+        if (MetaCPAN.favs_to_check[distribution]) {
+            $('#' + distribution + '-fav input[name="remove"]').val(1);
+        }
+
+    });
+
 }
 
 function getFavDataFromServer() {
@@ -418,7 +441,7 @@ function getFavDataFromServer() {
             showUserData(databack);
         },
         error: function() {
-            // Can't be logged in
+            // Can't be logged in, should be getting 403
             $('.logged_out').show();
         }
     });
